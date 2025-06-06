@@ -11,6 +11,8 @@ import docx
 # -----------------------------
 # Функции для работы с DOCX и API
 # -----------------------------
+STATUS_CHOICES = ['new', 'in_progress', 'completed', 'cancelled']
+PRIORITY_CHOICES = ['low', 'medium', 'high', 'critical']
 
 def extract_text_from_docx(file):
     """
@@ -56,7 +58,8 @@ def generate_task_json(document_text: str, student_name: str, role_ru: str, api_
         "  {\n"
         "    \"title\": \"<короткий заголовок, не более 5 слов, без лишних символов>\",\n"
         "    \"description\": \"<Подробное, ЧЁТКО структурированное описание задачи>\",\n"
-        "    \"status\": \"Todo\",\n"
+        "    \"status\": \"new | in_progress | completed | cancelled\",\n"
+        "    \"priority\": \"low | medium | high | critical\",\n"
         "    \"role\": \"<роль студента на русском, напр. Аналитик>\",\n"
         "    \"executor\": \"<полное имя студента>\",\n"
         "    \"author\": \"AI\"\n"
@@ -65,7 +68,7 @@ def generate_task_json(document_text: str, student_name: str, role_ru: str, api_
         "- title: не более пяти слов, без кавычек внутри, без переносов строк.\n"
         "- description: литературный русский, может быть длинным, но без символов '\\n' внутри.\n"
         "- description: Используй подзаголовки или ключевые слова (например: Цель, Этапы, Результат).\n"
-        "- status всегда \"Todo\".\n"
+        "- status и priority выбираются осмысленно по задаче.\n"
         "- role — слово на русском.\n"
         "- executor — строка с полным именем студента.\n"
         "- author — строка \"AI\".\n"
@@ -73,6 +76,7 @@ def generate_task_json(document_text: str, student_name: str, role_ru: str, api_
     )
 
     # Сообщение с текстом ТЗ, именем студента и ролью
+    
     user_prompt = (
         f"Техническое задание:\n{document_text}\n\n"
         f"Студент: {student_name}\n"
@@ -100,7 +104,7 @@ def generate_task_json(document_text: str, student_name: str, role_ru: str, api_
         raise ValueError(f"Не удалось распарсить JSON от LLM для {student_name}:\n{raw_text}\nОшибка: {e}")
 
     # Проверка полей
-    required_fields = {"title", "description", "status", "role", "executor", "author"}
+    required_fields = {"title", "description", "status", "priority", "role", "executor", "author"}
     if not required_fields.issubset(set(data.keys())):
         raise ValueError(f"В JSON для {student_name} отсутствуют обязательные поля:\n{raw_text}")
 
@@ -272,6 +276,7 @@ if generate_button:
                             "title":       "Название задачи",
                             "description": "Описание задачи",
                             "status":      "Статус",
+                            "priority":    "Приоритет", 
                             "role":        "Роль",
                             "executor":    "Исполнитель",
                             "author":      "Автор"
